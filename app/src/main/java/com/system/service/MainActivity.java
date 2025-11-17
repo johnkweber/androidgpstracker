@@ -223,27 +223,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void enableDeviceAdmin() {
-        if (!devicePolicyManager.isAdminActive(deviceAdminComponent)) {
-            Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
-            intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, deviceAdminComponent);
-            intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
-                    "Enable device administrator to ensure continuous service operation");
-            startActivityForResult(intent, DEVICE_ADMIN_REQUEST_CODE);
-        } else {
-            requestBatteryOptimization();
-        }
+        // Device Admin is optional - skip if not already enabled
+        // (Can be enabled manually via Settings if needed)
+        requestBatteryOptimization();
     }
 
     private void requestBatteryOptimization() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-            String packageName = getPackageName();
-            if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
-                Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-                intent.setData(Uri.parse("package:" + packageName));
-                startActivity(intent);
-            }
-        }
+        // Battery optimization is handled via ADB for automated setup
+        // Skip user prompt
         startServiceIfNotRunning();
     }
 
