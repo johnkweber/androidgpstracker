@@ -7,9 +7,16 @@ public class Config {
     public static final String MQTT_PASSWORD = "Public!@#";
     public static final String MQTT_TOPIC_BASE = "/iotds/leonnel/"; // Topic will be: /iotds/leonnel/{macaddress}/gpsdata
 
-    // Location update interval in milliseconds (default: 5 minutes)
-    public static final long LOCATION_UPDATE_INTERVAL = 5 * 60 * 1000;
+    // Location update intervals in milliseconds
+    // When device is moving (speed > 1 m/s or ~3.6 km/h)
+    public static final long LOCATION_UPDATE_INTERVAL_MOVING = 2 * 60 * 1000; // 2 minutes
 
-    // Fastest location update interval in milliseconds (default: 2 minutes)
-    public static final long LOCATION_FASTEST_INTERVAL = 2 * 60 * 1000;
+    // When device is stationary (speed < 1 m/s)
+    public static final long LOCATION_UPDATE_INTERVAL_STATIONARY = 10 * 60 * 1000; // 10 minutes
+
+    // Fastest location update interval (limit)
+    public static final long LOCATION_FASTEST_INTERVAL = 1 * 60 * 1000; // 1 minute
+
+    // Speed threshold to determine if device is moving (m/s)
+    public static final float SPEED_THRESHOLD_MOVING = 1.0f; // ~3.6 km/h
 }

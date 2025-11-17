@@ -2,36 +2,182 @@ package com.system.service;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.widget.Button;
+import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 100;
     private static final int DEVICE_ADMIN_REQUEST_CODE = 101;
     private DevicePolicyManager devicePolicyManager;
     private ComponentName deviceAdminComponent;
 
+    private TextView serviceStatus;
+    private TextView deviceIdText;
+    private TextView mqttBroker;
+    private TextView mqttTopic;
+    private TextView lastPosition;
+    private TextView lastUpdateTime;
+    private TextView mqttStatus;
+    private TextView movementStatus;
+    private TextView updateInterval;
+    private TextView configuredIntervals;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
         devicePolicyManager = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         deviceAdminComponent = new ComponentName(this, AppDeviceAdminReceiver.class);
 
-        requestPermissions();
+        // Initialize views
+        serviceStatus = findViewById(R.id.serviceStatus);
+        deviceIdText = findViewById(R.id.deviceId);
+        mqttBroker = findViewById(R.id.mqttBroker);
+        mqttTopic = findViewById(R.id.mqttTopic);
+        lastPosition = findViewById(R.id.lastPosition);
+        lastUpdateTime = findViewById(R.id.lastUpdateTime);
+        mqttStatus = findViewById(R.id.mqttStatus);
+        movementStatus = findViewById(R.id.movementStatus);
+        updateInterval = findViewById(R.id.updateInterval);
+        configuredIntervals = findViewById(R.id.configuredIntervals);
+
+        Button refreshButton = findViewById(R.id.refreshButton);
+        Button closeButton = findViewById(R.id.closeButton);
+
+        refreshButton.setOnClickListener(v -> updateStatus());
+        closeButton.setOnClickListener(v -> finish());
+
+        // Check and request permissions
+        checkAndRequestPermissions();
+
+        // Update status display
+        updateStatus();
     }
 
-    private void requestPermissions() {
+    private void updateStatus() {
+        // Check if service is running
+        if (isServiceRunning(LocationTrackingService.class)) {
+            serviceStatus.setText("✓ Running");
+            serviceStatus.setBackgroundColor(0xFFE8F5E9);
+            serviceStatus.setTextColor(0xFF006400);
+        } else {
+            serviceStatus.setText("✗ Not Running");
+            serviceStatus.setBackgroundColor(0xFFFFEBEE);
+            serviceStatus.setTextColor(0xFFD32F2F);
+        }
+
+        // Get device ID
+        String deviceId = getDeviceId();
+        deviceIdText.setText(deviceId);
+
+        // Show MQTT settings
+        mqttBroker.setText("Broker: " + Config.MQTT_BROKER_URL);
+        mqttTopic.setText("Topic: " + Config.MQTT_TOPIC_BASE + deviceId + "/gpsdata");
+
+        // Get last position from SharedPreferences
+        SharedPreferences prefs = getSharedPreferences("gps_tracking", MODE_PRIVATE);
+        String lastLat = prefs.getString("last_lat", "N/A");
+        String lastLon = prefs.getString("last_lon", "N/A");
+        String lastTime = prefs.getString("last_time", "Never");
+        boolean mqttConnected = prefs.getBoolean("mqtt_connected", false);
+
+        if (!lastLat.equals("N/A")) {
+            lastPosition.setText("Lat: " + lastLat + "\nLon: " + lastLon);
+        } else {
+            lastPosition.setText("No position sent yet");
+        }
+
+        lastUpdateTime.setText(lastTime);
+
+        if (mqttConnected) {
+            mqttStatus.setText("✓ Connected");
+            mqttStatus.setBackgroundColor(0xFFE8F5E9);
+            mqttStatus.setTextColor(0xFF006400);
+        } else {
+            mqttStatus.setText("✗ Disconnected");
+            mqttStatus.setBackgroundColor(0xFFFFEBEE);
+            mqttStatus.setTextColor(0xFFD32F2F);
+        }
+
+        // Movement status and current speed
+        boolean isMoving = prefs.getBoolean("is_moving", false);
+        float currentSpeed = prefs.getFloat("current_speed", 0);
+        long currentIntervalMs = prefs.getLong("current_interval", Config.LOCATION_UPDATE_INTERVAL_MOVING);
+
+        if (isMoving) {
+            movementStatus.setText("Moving (" + String.format("%.1f", currentSpeed * 3.6f) + " km/h)");
+            movementStatus.setBackgroundColor(0xFFE3F2FD);
+            movementStatus.setTextColor(0xFF1976D2);
+        } else {
+            movementStatus.setText("Stationary (" + String.format("%.1f", currentSpeed * 3.6f) + " km/h)");
+            movementStatus.setBackgroundColor(0xFFFFF3E0);
+            movementStatus.setTextColor(0xFFF57C00);
+        }
+
+        // Current interval
+        long currentIntervalMin = currentIntervalMs / 60000;
+        updateInterval.setText(currentIntervalMin + " minutes (" + (isMoving ? "Moving Mode" : "Stationary Mode") + ")");
+
+        // Configured intervals
+        long movingMin = Config.LOCATION_UPDATE_INTERVAL_MOVING / 60000;
+        long stationaryMin = Config.LOCATION_UPDATE_INTERVAL_STATIONARY / 60000;
+        configuredIntervals.setText(
+                "Moving: " + movingMin + " min\n" +
+                "Stationary: " + stationaryMin + " min\n" +
+                "Speed threshold: " + String.format("%.1f", Config.SPEED_THRESHOLD_MOVING * 3.6f) + " km/h"
+        );
+    }
+
+    private String getDeviceId() {
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (wifiManager != null) {
+            WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+            String macAddress = wifiInfo.getMacAddress();
+
+            if (macAddress == null || macAddress.equals("02:00:00:00:00:00")) {
+                String androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+                if (androidId != null) {
+                    return "device_" + androidId.toLowerCase();
+                }
+                return "device_unknown";
+            }
+
+            return macAddress.replaceAll("[:-]", "").toLowerCase();
+        }
+        return "device_unknown";
+    }
+
+    private boolean isServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        if (manager != null) {
+            for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+                if (serviceClass.getName().equals(service.service.getClassName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void checkAndRequestPermissions() {
         boolean needsPermission = false;
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -98,7 +244,7 @@ public class MainActivity extends Activity {
                 startActivity(intent);
             }
         }
-        startService();
+        startServiceIfNotRunning();
     }
 
     @Override
@@ -109,13 +255,21 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void startService() {
-        Intent serviceIntent = new Intent(this, LocationTrackingService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent);
-        } else {
-            startService(serviceIntent);
+    private void startServiceIfNotRunning() {
+        if (!isServiceRunning(LocationTrackingService.class)) {
+            Intent serviceIntent = new Intent(this, LocationTrackingService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
         }
-        finish();
+        updateStatus();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateStatus();
     }
 }

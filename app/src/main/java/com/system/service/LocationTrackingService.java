@@ -7,6 +7,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.wifi.WifiInfo;
@@ -85,7 +86,7 @@ public class LocationTrackingService extends Service {
     private void setupLocationTracking() {
         LocationRequest locationRequest = new LocationRequest.Builder(
                 Priority.PRIORITY_HIGH_ACCURACY,
-                Config.LOCATION_UPDATE_INTERVAL)
+                Config.LOCATION_UPDATE_INTERVAL_MOVING)
                 .setMinUpdateIntervalMillis(Config.LOCATION_FASTEST_INTERVAL)
                 .build();
 
@@ -97,6 +98,16 @@ public class LocationTrackingService extends Service {
                 }
                 for (Location location : locationResult.getLocations()) {
                     if (location != null) {
+                        // Check if device is moving and adjust update interval
+                        boolean isMoving = location.hasSpeed() && location.getSpeed() > Config.SPEED_THRESHOLD_MOVING;
+                        long newInterval = isMoving ? Config.LOCATION_UPDATE_INTERVAL_MOVING : Config.LOCATION_UPDATE_INTERVAL_STATIONARY;
+
+                        // Save movement status
+                        saveMovementStatus(isMoving, location.hasSpeed() ? location.getSpeed() : 0);
+
+                        // Update location request if interval changed significantly
+                        updateLocationInterval(newInterval);
+
                         sendLocationData(location);
                     }
                 }
@@ -109,6 +120,36 @@ public class LocationTrackingService extends Service {
                     locationCallback,
                     Looper.getMainLooper());
         }
+    }
+
+    private long currentInterval = Config.LOCATION_UPDATE_INTERVAL_MOVING;
+
+    private void updateLocationInterval(long newInterval) {
+        if (newInterval != currentInterval) {
+            currentInterval = newInterval;
+            LocationRequest locationRequest = new LocationRequest.Builder(
+                    Priority.PRIORITY_HIGH_ACCURACY,
+                    newInterval)
+                    .setMinUpdateIntervalMillis(Config.LOCATION_FASTEST_INTERVAL)
+                    .build();
+
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED) {
+                fusedLocationClient.removeLocationUpdates(locationCallback);
+                fusedLocationClient.requestLocationUpdates(locationRequest,
+                        locationCallback,
+                        Looper.getMainLooper());
+            }
+        }
+    }
+
+    private void saveMovementStatus(boolean isMoving, float speed) {
+        SharedPreferences prefs = getSharedPreferences("gps_tracking", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean("is_moving", isMoving);
+        editor.putFloat("current_speed", speed);
+        editor.putLong("current_interval", currentInterval);
+        editor.apply();
     }
 
     private void setupMqttClient() {
@@ -186,6 +227,9 @@ public class LocationTrackingService extends Service {
                     message.setQos(1);
                     message.setRetained(false);
                     mqttClient.publish(topic, message);
+
+                    // Save last position to SharedPreferences
+                    saveLastPosition(location);
                 } else {
                     // Attempt to reconnect if not connected
                     reconnectMqtt();
@@ -194,6 +238,16 @@ public class LocationTrackingService extends Service {
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    private void saveLastPosition(Location location) {
+        SharedPreferences prefs = getSharedPreferences("gps_tracking", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("last_lat", String.format("%.6f", location.getLatitude()));
+        editor.putString("last_lon", String.format("%.6f", location.getLongitude()));
+        editor.putString("last_time", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date()));
+        editor.putBoolean("mqtt_connected", mqttClient != null && mqttClient.isConnected());
+        editor.apply();
     }
 
     private void createNotificationChannel() {

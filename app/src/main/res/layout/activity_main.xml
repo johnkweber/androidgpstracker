@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="GPS Tracking Status"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:gravity="center"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Service Status -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Service Status"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_marginTop="8dp"/>
+
+        <TextView
+            android:id="@+id/serviceStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Checking..."
+            android:textSize="14sp"
+            android:textColor="#006400"
+            android:padding="8dp"
+            android:background="#E8F5E9"
+            android:layout_marginTop="4dp"/>
+
+        <!-- Device ID -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Device ID"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_marginTop="16dp"/>
+
+        <TextView
+            android:id="@+id/deviceId"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Loading..."
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:padding="8dp"
+            android:background="#F5F5F5"
+            android:layout_marginTop="4dp"/>
+
+        <!-- MQTT Settings -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="MQTT Settings"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_marginTop="16dp"/>
+
+        <TextView
+            android:id="@+id/mqttBroker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Loading..."
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:padding="8dp"
+            android:background="#F5F5F5"
+            android:layout_marginTop="4dp"/>
+
+        <TextView
+            android:id="@+id/mqttTopic"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Loading..."
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:padding="8dp"
+            android:background="#F5F5F5"
+            android:layout_marginTop="4dp"/>
+
+        <!-- Last Position -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Last Position Sent"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_marginTop="16dp"/>
+
+        <TextView
+            android:id="@+id/lastPosition"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No data sent yet"
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:padding="8dp"
+            android:background="#F5F5F5"
+            android:layout_marginTop="4dp"/>
+
+        <!-- Last Update Time -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Last Update"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_marginTop="16dp"/>
+
+        <TextView
+            android:id="@+id/lastUpdateTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Never"
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:padding="8dp"
+            android:background="#F5F5F5"
+            android:layout_marginTop="4dp"/>
+
+        <!-- MQTT Connection Status -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="MQTT Connection"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_marginTop="16dp"/>
+
+        <TextView
+            android:id="@+id/mqttStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Unknown"
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:padding="8dp"
+            android:background="#F5F5F5"
+            android:layout_marginTop="4dp"/>
+
+        <!-- Movement Status -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Movement Status"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_marginTop="16dp"/>
+
+        <TextView
+            android:id="@+id/movementStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Unknown"
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:padding="8dp"
+            android:background="#F5F5F5"
+            android:layout_marginTop="4dp"/>
+
+        <!-- Update Interval -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Current Update Interval"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_marginTop="16dp"/>
+
+        <TextView
+            android:id="@+id/updateInterval"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Unknown"
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:padding="8dp"
+            android:background="#F5F5F5"
+            android:layout_marginTop="4dp"/>
+
+        <!-- Configuration Info -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Configured Intervals"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_marginTop="16dp"/>
+
+        <TextView
+            android:id="@+id/configuredIntervals"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Loading..."
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:padding="8dp"
+            android:background="#F5F5F5"
+            android:layout_marginTop="4dp"/>
+
+        <!-- Refresh Button -->
+        <Button
+            android:id="@+id/refreshButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Refresh Status"
+            android:layout_marginTop="24dp"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#2196F3"/>
+
+        <!-- Close Button -->
+        <Button
+            android:id="@+id/closeButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Close (Service Continues Running)"
+            android:layout_marginTop="8dp"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#4CAF50"/>
+
+    </LinearLayout>
+</ScrollView>
