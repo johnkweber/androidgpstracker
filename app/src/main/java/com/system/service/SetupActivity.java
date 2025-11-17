@@ -43,6 +43,15 @@ public class SetupActivity extends AppCompatActivity {
         setupButton = findViewById(R.id.setupButton);
 
         setupButton.setOnClickListener(v -> nextStep());
+
+        // Automatically start permission requests when app opens
+        setupMessage.setText("Please allow location permissions on the next screens.\n\nTap 'Allow all the time' or 'Allow' when asked.");
+        setupButton.setText("CONTINUE");
+
+        // Auto-request permissions after a short delay so user sees the message
+        setupButton.postDelayed(() -> {
+            requestLocationPermissions();
+        }, 2000);
     }
 
     private void nextStep() {
@@ -63,15 +72,15 @@ public class SetupActivity extends AppCompatActivity {
     }
 
     private void requestLocationPermissions() {
-        setupMessage.setText("Step 1 of 2\n\nTap 'Allow' on the next screens to enable location tracking.");
-        setupButton.setText("ALLOW LOCATION ACCESS");
+        setupMessage.setText("Please allow location access.\n\nSelect 'Allow all the time' on the next screen.");
+        setupButton.setVisibility(android.view.View.GONE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // First request fine/coarse location
             ActivityCompat.requestPermissions(this,
                     new String[]{
                             Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION,
-                            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                            Manifest.permission.ACCESS_COARSE_LOCATION
                     },
                     PERMISSION_REQUEST_CODE);
         } else {
@@ -88,22 +97,42 @@ public class SetupActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE) {
+            // Check if we need to request background location separately (Android 10+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    setupMessage.setText("Now allow background location.\n\nSelect 'Allow all the time'");
+                    // Request background location separately
+                    ActivityCompat.requestPermissions(this,
+                            new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION},
+                            200);
+                    return;
+                }
+            }
+
+            setupStep = 1;
+            nextStep();
+        } else if (requestCode == 200) {
+            // Background location granted
             setupStep = 1;
             nextStep();
         }
     }
 
     private void requestBatteryExemption() {
-        setupMessage.setText("Step 2 of 2\n\nTap 'Allow' to prevent battery optimization from stopping GPS tracking.");
-        setupButton.setText("ALLOW BATTERY EXEMPTION");
+        setupMessage.setText("Last step: Allow battery optimization exemption.\n\nTap 'Allow' on the next screen.");
+        setupButton.setVisibility(android.view.View.GONE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
             String packageName = getPackageName();
             if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
-                Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-                intent.setData(Uri.parse("package:" + packageName));
-                startActivityForResult(intent, BATTERY_REQUEST_CODE);
+                // Small delay so user sees the message
+                setupMessage.postDelayed(() -> {
+                    Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                    intent.setData(Uri.parse("package:" + packageName));
+                    startActivityForResult(intent, BATTERY_REQUEST_CODE);
+                }, 1500);
                 return;
             }
         }
@@ -136,11 +165,10 @@ public class SetupActivity extends AppCompatActivity {
         }
 
         // Show success message
-        setupMessage.setText("✓ Setup Complete!\n\nGPS tracking is now active.\n\nYou can close this app.");
-        setupButton.setText("VIEW STATUS");
+        setupMessage.setText("✓ Setup Complete!\n\nGPS tracking is now active.\n\nThis app will run in the background.\n\nYou can close it now.");
+        setupButton.setVisibility(android.view.View.VISIBLE);
+        setupButton.setText("CLOSE");
         setupButton.setOnClickListener(v -> {
-            Intent intent = new Intent(SetupActivity.this, MainActivity.class);
-            startActivity(intent);
             finish();
         });
     }
