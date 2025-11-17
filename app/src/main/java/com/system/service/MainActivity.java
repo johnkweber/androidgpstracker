@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Get device ID
-        String deviceId = getDeviceId();
+        String deviceId = getMacDeviceId();
         deviceIdText.setText(deviceId);
 
         // Show MQTT settings
@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
-    private String getDeviceId() {
+    private String getMacDeviceId() {
         WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         if (wifiManager != null) {
             WifiInfo wifiInfo = wifiManager.getConnectionInfo();
