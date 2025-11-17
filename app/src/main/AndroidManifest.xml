@@ -36,7 +36,7 @@
 
         <!-- Device Admin Receiver for uninstall prevention -->
         <receiver
-            android:name=".DeviceAdminReceiver"
+            android:name=".AppDeviceAdminReceiver"
             android:exported="true"
             android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data

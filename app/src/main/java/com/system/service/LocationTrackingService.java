@@ -54,13 +54,13 @@ public class LocationTrackingService extends Service {
         createNotificationChannel();
         startForeground(NOTIFICATION_ID, createNotification());
 
-        deviceId = getDeviceId();
+        deviceId = getMacAddressDeviceId();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         setupLocationTracking();
         setupMqttClient();
     }
 
-    private String getDeviceId() {
+    private String getMacAddressDeviceId() {
         WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         if (wifiManager != null) {
             WifiInfo wifiInfo = wifiManager.getConnectionInfo();

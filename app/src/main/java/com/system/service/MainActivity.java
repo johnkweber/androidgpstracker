@@ -26,7 +26,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         devicePolicyManager = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
-        deviceAdminComponent = new ComponentName(this, DeviceAdminReceiver.class);
+        deviceAdminComponent = new ComponentName(this, AppDeviceAdminReceiver.class);
 
         requestPermissions();
     }
