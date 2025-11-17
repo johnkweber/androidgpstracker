@@ -1,0 +1,248 @@
+package com.system.service;
+
+import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+import android.os.Build;
+import android.os.IBinder;
+import android.os.Looper;
+import android.provider.Settings;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
+
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+
+import org.json.JSONObject;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+
+public class LocationTrackingService extends Service {
+    private static final String CHANNEL_ID = "SystemServiceChannel";
+    private static final int NOTIFICATION_ID = 1001;
+
+    private FusedLocationProviderClient fusedLocationClient;
+    private LocationCallback locationCallback;
+    private MqttClient mqttClient;
+    private String deviceId;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        createNotificationChannel();
+        startForeground(NOTIFICATION_ID, createNotification());
+
+        deviceId = getDeviceId();
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        setupLocationTracking();
+        setupMqttClient();
+    }
+
+    private String getDeviceId() {
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (wifiManager != null) {
+            WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+            String macAddress = wifiInfo.getMacAddress();
+
+            // Handle cases where MAC is not available or is the placeholder
+            if (macAddress == null || macAddress.equals("02:00:00:00:00:00")) {
+                // Fallback to Android ID
+                String androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+                if (androidId != null) {
+                    return "device_" + androidId.toLowerCase();
+                }
+                return "device_unknown";
+            }
+
+            // Remove dashes/colons and convert to lowercase
+            return macAddress.replaceAll("[:-]", "").toLowerCase();
+        }
+        return "device_unknown";
+    }
+
+    private void setupLocationTracking() {
+        LocationRequest locationRequest = new LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                Config.LOCATION_UPDATE_INTERVAL)
+                .setMinUpdateIntervalMillis(Config.LOCATION_FASTEST_INTERVAL)
+                .build();
+
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult == null) {
+                    return;
+                }
+                for (Location location : locationResult.getLocations()) {
+                    if (location != null) {
+                        sendLocationData(location);
+                    }
+                }
+            }
+        };
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.requestLocationUpdates(locationRequest,
+                    locationCallback,
+                    Looper.getMainLooper());
+        }
+    }
+
+    private void setupMqttClient() {
+        new Thread(() -> {
+            try {
+                String clientId = "android_" + deviceId + "_" + System.currentTimeMillis();
+                mqttClient = new MqttClient(Config.MQTT_BROKER_URL, clientId, new MemoryPersistence());
+
+                MqttConnectOptions options = new MqttConnectOptions();
+                options.setCleanSession(true);
+                options.setAutomaticReconnect(true);
+                options.setConnectionTimeout(10);
+                options.setKeepAliveInterval(60);
+
+                if (!Config.MQTT_USERNAME.isEmpty()) {
+                    options.setUserName(Config.MQTT_USERNAME);
+                }
+                if (!Config.MQTT_PASSWORD.isEmpty()) {
+                    options.setPassword(Config.MQTT_PASSWORD.toCharArray());
+                }
+
+                mqttClient.setCallback(new MqttCallback() {
+                    @Override
+                    public void connectionLost(Throwable cause) {
+                        reconnectMqtt();
+                    }
+
+                    @Override
+                    public void messageArrived(String topic, MqttMessage message) {
+                    }
+
+                    @Override
+                    public void deliveryComplete(IMqttDeliveryToken token) {
+                    }
+                });
+
+                mqttClient.connect(options);
+            } catch (MqttException e) {
+                e.printStackTrace();
+                // Retry connection after delay
+                reconnectMqtt();
+            }
+        }).start();
+    }
+
+    private void reconnectMqtt() {
+        new Thread(() -> {
+            try {
+                Thread.sleep(30000); // Wait 30 seconds before reconnecting
+                if (mqttClient != null && !mqttClient.isConnected()) {
+                    setupMqttClient();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private void sendLocationData(Location location) {
+        new Thread(() -> {
+            try {
+                JSONObject json = new JSONObject();
+                json.put("device_id", deviceId);
+                json.put("latitude", location.getLatitude());
+                json.put("longitude", location.getLongitude());
+
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                json.put("timestamp", sdf.format(new Date()));
+
+                if (mqttClient != null && mqttClient.isConnected()) {
+                    // Construct topic: /iotds/leonnel/{macaddress}/gpsdata
+                    String topic = Config.MQTT_TOPIC_BASE + deviceId + "/gpsdata";
+                    MqttMessage message = new MqttMessage(json.toString().getBytes());
+                    message.setQos(1);
+                    message.setRetained(false);
+                    mqttClient.publish(topic, message);
+                } else {
+                    // Attempt to reconnect if not connected
+                    reconnectMqtt();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel serviceChannel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "System Service",
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            serviceChannel.setShowBadge(false);
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(serviceChannel);
+            }
+        }
+    }
+
+    private Notification createNotification() {
+        return new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle(getString(R.string.service_notification_title))
+                .setContentText(getString(R.string.service_notification_text))
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setOngoing(true)
+                .build();
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (fusedLocationClient != null && locationCallback != null) {
+            fusedLocationClient.removeLocationUpdates(locationCallback);
+        }
+        if (mqttClient != null) {
+            try {
+                mqttClient.disconnect();
+            } catch (MqttException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+}
