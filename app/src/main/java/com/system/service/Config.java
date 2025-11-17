@@ -2,7 +2,7 @@ package com.system.service;
 
 public class Config {
     // MQTT Configuration
-    public static final String MQTT_BROKER_URL = "tcp://server.iotdataserver.com:1883";
+    public static final String MQTT_BROKER_URL = "tcp://server.iotdataservice.com:1883";
     public static final String MQTT_USERNAME = "emqx";
     public static final String MQTT_PASSWORD = "Public!@#";
     public static final String MQTT_TOPIC_BASE = "/iotds/leonnel/"; // Topic will be: /iotds/leonnel/{macaddress}/gpsdata
