@@ -4,28 +4,27 @@ Copy and paste this message to send to your staff:
 
 ---
 
-**GPS Tracker App Installation**
+**GPS Tracker App - Installation Required**
 
-Please install this app on your company phone:
+Please install this tracker app on your company phone. Follow these simple steps:
 
-1. **Download the app file I sent you** (app-debug.apk or app-signed.apk)
+**Step 1: Install**
+- Tap on the app file I sent you (app-signed.apk)
+- If you see "Install blocked", tap Settings and enable "Install from this source"
+- Tap Install
 
-2. **Install the app:**
-   - Tap on the file to install
-   - If you see "Install blocked" - tap Settings and enable "Unknown Sources" or "Install from this source"
-   - Tap Install
+**Step 2: Open & Allow Permissions**
+- Open the "System Service" app
+- Permission prompts will appear automatically
+- When asked for **Location**, tap **"Allow all the time"**
+- When asked for **Battery**, tap **"Allow"**
 
-3. **Open the app** (called "System Service")
-   - Tap the green "TAP HERE TO SET UP" button
-   - When asked for Location permission, tap **"Allow all the time"** or **"Allow"**
-   - When asked about Battery, tap **"Allow"**
+**Step 3: Done!**
+- You'll see "Setup Complete"
+- Close the app - it runs in the background automatically
+- No need to keep it open
 
-4. **That's it!** You'll see "Setup Complete"
-   - The app will track the company phone's location
-   - You can close the app - it runs automatically in the background
-   - You can reopen it anytime to see the current status
-
-**Note:** This is required for all company phones for fleet management purposes.
+**Note:** This GPS tracker is required on all company phones for fleet management. The app tracks location only while you have the phone.
 
 ---
 
