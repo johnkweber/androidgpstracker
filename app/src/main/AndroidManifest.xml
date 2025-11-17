@@ -22,16 +22,23 @@
         android:theme="@android:style/Theme.Translucent.NoTitleBar"
         tools:ignore="GoogleAppIndexingWarning">
 
-        <!-- Main activity -->
+        <!-- Setup activity (launcher) -->
         <activity
-            android:name=".MainActivity"
+            android:name=".SetupActivity"
             android:exported="true"
-            android:theme="@style/Theme.AppCompat.Light">
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Main activity -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.Light" />
+
 
         <!-- Device Admin Receiver for uninstall prevention -->
         <receiver
