@@ -89,8 +89,8 @@ public class MainActivity extends AppCompatActivity {
             serviceStatus.setTextColor(0xFFD32F2F);
         }
 
-        // Get device ID
-        String deviceId = getMacDeviceId();
+        // Get stable device ID
+        String deviceId = DeviceIdManager.getDeviceId(this);
         deviceIdText.setText(deviceId);
 
         // Show MQTT settings
@@ -157,24 +157,6 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
-    private String getMacDeviceId() {
-        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        if (wifiManager != null) {
-            WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-            String macAddress = wifiInfo.getMacAddress();
-
-            if (macAddress == null || macAddress.equals("02:00:00:00:00:00")) {
-                String androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-                if (androidId != null) {
-                    return "device_" + androidId.toLowerCase();
-                }
-                return "device_unknown";
-            }
-
-            return macAddress.replaceAll("[:-]", "").toLowerCase();
-        }
-        return "device_unknown";
-    }
 
     private String formatInterval(long milliseconds) {
         long seconds = milliseconds / 1000;
