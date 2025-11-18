@@ -39,6 +39,12 @@
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light" />
 
+        <!-- Settings activity -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light" />
+
 
         <!-- Device Admin Receiver for uninstall prevention -->
         <receiver

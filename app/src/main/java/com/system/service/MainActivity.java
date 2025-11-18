@@ -60,9 +60,14 @@ public class MainActivity extends AppCompatActivity {
         configuredIntervals = findViewById(R.id.configuredIntervals);
 
         Button refreshButton = findViewById(R.id.refreshButton);
+        Button settingsButton = findViewById(R.id.settingsButton);
         Button closeButton = findViewById(R.id.closeButton);
 
         refreshButton.setOnClickListener(v -> updateStatus());
+        settingsButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+            startActivity(intent);
+        });
         closeButton.setOnClickListener(v -> finish());
 
         // Check and request permissions
@@ -136,13 +141,19 @@ public class MainActivity extends AppCompatActivity {
         long currentIntervalMin = currentIntervalMs / 60000;
         updateInterval.setText(currentIntervalMin + " minutes (" + (isMoving ? "Moving Mode" : "Stationary Mode") + ")");
 
-        // Configured intervals
-        long movingMin = Config.LOCATION_UPDATE_INTERVAL_MOVING / 60000;
-        long stationaryMin = Config.LOCATION_UPDATE_INTERVAL_STATIONARY / 60000;
+        // Configured intervals - read from settings
+        SharedPreferences trackingPrefs = getSharedPreferences("tracking_settings", MODE_PRIVATE);
+        long movingMs = trackingPrefs.getLong("moving_interval", Config.LOCATION_UPDATE_INTERVAL_MOVING);
+        long stationaryMs = trackingPrefs.getLong("stationary_interval", Config.LOCATION_UPDATE_INTERVAL_STATIONARY);
+        float speedThreshold = trackingPrefs.getFloat("speed_threshold", Config.SPEED_THRESHOLD_MOVING);
+
+        String movingStr = formatInterval(movingMs);
+        String stationaryStr = formatInterval(stationaryMs);
+
         configuredIntervals.setText(
-                "Moving: " + movingMin + " min\n" +
-                "Stationary: " + stationaryMin + " min\n" +
-                "Speed threshold: " + String.format("%.1f", Config.SPEED_THRESHOLD_MOVING * 3.6f) + " km/h"
+                "Moving: " + movingStr + "\n" +
+                "Stationary: " + stationaryStr + "\n" +
+                "Speed threshold: " + String.format("%.1f", speedThreshold * 3.6f) + " km/h"
         );
     }
 
@@ -163,6 +174,19 @@ public class MainActivity extends AppCompatActivity {
             return macAddress.replaceAll("[:-]", "").toLowerCase();
         }
         return "device_unknown";
+    }
+
+    private String formatInterval(long milliseconds) {
+        long seconds = milliseconds / 1000;
+        if (seconds < 60) {
+            return seconds + " sec";
+        }
+        long minutes = seconds / 60;
+        if (minutes < 60) {
+            return minutes + " min";
+        }
+        long hours = minutes / 60;
+        return hours + " hr";
     }
 
     private boolean isServiceRunning(Class<?> serviceClass) {

@@ -230,6 +230,16 @@
             android:textColor="#FFFFFF"
             android:backgroundTint="#2196F3"/>
 
+        <!-- Settings Button -->
+        <Button
+            android:id="@+id/settingsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Configure Tracking Intervals"
+            android:layout_marginTop="8dp"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#FF9800"/>
+
         <!-- Close Button -->
         <Button
             android:id="@+id/closeButton"

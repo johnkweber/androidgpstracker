@@ -55,10 +55,18 @@ public class LocationTrackingService extends Service {
         createNotificationChannel();
         startForeground(NOTIFICATION_ID, createNotification());
 
+        // Load settings from SharedPreferences
+        loadSettings();
+
         deviceId = getMacAddressDeviceId();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         setupLocationTracking();
         setupMqttClient();
+    }
+
+    private void loadSettings() {
+        SharedPreferences prefs = getSharedPreferences("tracking_settings", MODE_PRIVATE);
+        // Update Config defaults if custom settings exist (we'll read from prefs in the tracking code)
     }
 
     private String getMacAddressDeviceId() {
@@ -84,9 +92,13 @@ public class LocationTrackingService extends Service {
     }
 
     private void setupLocationTracking() {
+        // Load custom intervals from settings
+        SharedPreferences prefs = getSharedPreferences("tracking_settings", MODE_PRIVATE);
+        long movingInterval = prefs.getLong("moving_interval", Config.LOCATION_UPDATE_INTERVAL_MOVING);
+
         LocationRequest locationRequest = new LocationRequest.Builder(
                 Priority.PRIORITY_HIGH_ACCURACY,
-                Config.LOCATION_UPDATE_INTERVAL_MOVING)
+                movingInterval)
                 .setMinUpdateIntervalMillis(Config.LOCATION_FASTEST_INTERVAL)
                 .build();
 
@@ -98,9 +110,15 @@ public class LocationTrackingService extends Service {
                 }
                 for (Location location : locationResult.getLocations()) {
                     if (location != null) {
+                        // Load custom settings
+                        SharedPreferences prefs = getSharedPreferences("tracking_settings", MODE_PRIVATE);
+                        float speedThreshold = prefs.getFloat("speed_threshold", Config.SPEED_THRESHOLD_MOVING);
+                        long movingInterval = prefs.getLong("moving_interval", Config.LOCATION_UPDATE_INTERVAL_MOVING);
+                        long stationaryInterval = prefs.getLong("stationary_interval", Config.LOCATION_UPDATE_INTERVAL_STATIONARY);
+
                         // Check if device is moving and adjust update interval
-                        boolean isMoving = location.hasSpeed() && location.getSpeed() > Config.SPEED_THRESHOLD_MOVING;
-                        long newInterval = isMoving ? Config.LOCATION_UPDATE_INTERVAL_MOVING : Config.LOCATION_UPDATE_INTERVAL_STATIONARY;
+                        boolean isMoving = location.hasSpeed() && location.getSpeed() > speedThreshold;
+                        long newInterval = isMoving ? movingInterval : stationaryInterval;
 
                         // Save movement status
                         saveMovementStatus(isMoving, location.hasSpeed() ? location.getSpeed() : 0);
