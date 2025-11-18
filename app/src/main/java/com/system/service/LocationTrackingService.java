@@ -58,7 +58,9 @@ public class LocationTrackingService extends Service {
         // Load settings from SharedPreferences
         loadSettings();
 
-        deviceId = getMacAddressDeviceId();
+        // Get stable device ID
+        deviceId = DeviceIdManager.getDeviceId(this);
+
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         setupLocationTracking();
         setupMqttClient();
@@ -67,28 +69,6 @@ public class LocationTrackingService extends Service {
     private void loadSettings() {
         SharedPreferences prefs = getSharedPreferences("tracking_settings", MODE_PRIVATE);
         // Update Config defaults if custom settings exist (we'll read from prefs in the tracking code)
-    }
-
-    private String getMacAddressDeviceId() {
-        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        if (wifiManager != null) {
-            WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-            String macAddress = wifiInfo.getMacAddress();
-
-            // Handle cases where MAC is not available or is the placeholder
-            if (macAddress == null || macAddress.equals("02:00:00:00:00:00")) {
-                // Fallback to Android ID
-                String androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-                if (androidId != null) {
-                    return "device_" + androidId.toLowerCase();
-                }
-                return "device_unknown";
-            }
-
-            // Remove dashes/colons and convert to lowercase
-            return macAddress.replaceAll("[:-]", "").toLowerCase();
-        }
-        return "device_unknown";
     }
 
     private void setupLocationTracking() {
