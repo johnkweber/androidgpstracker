@@ -95,7 +95,11 @@ public class MainActivity extends AppCompatActivity {
 
         // Show MQTT settings
         mqttBroker.setText("Broker: " + Config.MQTT_BROKER_URL);
-        mqttTopic.setText("Topic: " + Config.MQTT_TOPIC_BASE + deviceId + "/gpsdata");
+
+        // Get base topic from settings
+        SharedPreferences trackingPrefs = getSharedPreferences("tracking_settings", MODE_PRIVATE);
+        String baseTopic = trackingPrefs.getString("mqtt_base_topic", Config.MQTT_TOPIC_BASE);
+        mqttTopic.setText("Topic: " + baseTopic + deviceId + "/gpsdata");
 
         // Get last position from SharedPreferences
         SharedPreferences prefs = getSharedPreferences("gps_tracking", MODE_PRIVATE);
@@ -141,8 +145,7 @@ public class MainActivity extends AppCompatActivity {
         long currentIntervalMin = currentIntervalMs / 60000;
         updateInterval.setText(currentIntervalMin + " minutes (" + (isMoving ? "Moving Mode" : "Stationary Mode") + ")");
 
-        // Configured intervals - read from settings
-        SharedPreferences trackingPrefs = getSharedPreferences("tracking_settings", MODE_PRIVATE);
+        // Configured intervals - read from settings (reuse trackingPrefs from above)
         long movingMs = trackingPrefs.getLong("moving_interval", Config.LOCATION_UPDATE_INTERVAL_MOVING);
         long stationaryMs = trackingPrefs.getLong("stationary_interval", Config.LOCATION_UPDATE_INTERVAL_STATIONARY);
         float speedThreshold = trackingPrefs.getFloat("speed_threshold", Config.SPEED_THRESHOLD_MOVING);

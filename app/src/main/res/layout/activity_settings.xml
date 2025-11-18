@@ -81,6 +81,35 @@
             android:padding="12dp"
             android:background="@android:drawable/btn_dropdown"/>
 
+        <!-- MQTT Base Topic -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="MQTT Base Topic"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_marginTop="24dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Base topic path (device ID will be appended). Example: /iotds/clientname/"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/baseTopicInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="/iotds/clientname/"
+            android:inputType="text"
+            android:padding="12dp"
+            android:background="@android:drawable/edit_text"
+            android:textSize="14sp"/>
+
         <!-- Speed Threshold -->
         <TextView
             android:layout_width="match_parent"
