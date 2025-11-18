@@ -33,7 +33,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="How often to send GPS data when device is moving (speed > 3.6 km/h)"
+            android:text="How often to send GPS data when device is moving (speed above 3.6 km/h)"
             android:textSize="14sp"
             android:textColor="#666666"
             android:layout_marginTop="4dp"
@@ -68,7 +68,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="How often to send GPS data when device is not moving (speed < 3.6 km/h)"
+            android:text="How often to send GPS data when device is not moving (speed below 3.6 km/h)"
             android:textSize="14sp"
             android:textColor="#666666"
             android:layout_marginTop="4dp"
