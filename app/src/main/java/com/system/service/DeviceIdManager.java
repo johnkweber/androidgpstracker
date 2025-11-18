@@ -16,35 +16,27 @@ public class DeviceIdManager {
     /**
      * Gets a stable device ID that never changes.
      * Priority:
-     * 1. Previously saved stable ID (persists across app updates)
-     * 2. MAC address (if available)
-     * 3. Android ID
-     * 4. Generated UUID (saved for future use)
+     * 1. Android ID (most stable, persists across app reinstalls)
+     * 2. Previously saved stable ID (persists across app updates only)
+     * 3. Generated UUID (saved for future use)
+     *
+     * Note: Android ID is unique per device and persists across app uninstalls.
+     * It only changes on factory reset.
      */
     public static String getDeviceId(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-
-        // Check if we already have a saved ID
-        String savedId = prefs.getString(KEY_DEVICE_ID, null);
-        if (savedId != null && !savedId.isEmpty()) {
-            return savedId;
-        }
-
-        // Try to get MAC address (works on Android 9 and below)
-        String macId = getMacAddress(context);
-        if (macId != null && !macId.isEmpty()) {
-            // Save it for future use
-            prefs.edit().putString(KEY_DEVICE_ID, macId).apply();
-            return macId;
-        }
-
-        // Try Android ID
+        // Try Android ID first (persists across uninstalls)
         String androidId = getAndroidId(context);
         if (androidId != null && !androidId.isEmpty() && !androidId.equals("9774d56d682e549c")) {
             // 9774d56d682e549c is a known bug value on some emulators
             String deviceId = "device_" + androidId.toLowerCase();
-            prefs.edit().putString(KEY_DEVICE_ID, deviceId).apply();
             return deviceId;
+        }
+
+        // Fall back to SharedPreferences (for devices where Android ID fails)
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String savedId = prefs.getString(KEY_DEVICE_ID, null);
+        if (savedId != null && !savedId.isEmpty()) {
+            return savedId;
         }
 
         // Last resort: Generate a unique UUID and save it
