@@ -18,7 +18,7 @@ public class SettingsActivity extends AppCompatActivity {
     private Spinner movingIntervalSpinner;
     private Spinner stationaryIntervalSpinner;
     private Spinner speedThresholdSpinner;
-    private android.widget.EditText baseTopicInput;
+    private android.widget.EditText clientNameInput;
     private TextView settingsPreview;
     private Button saveButton;
     private Button resetButton;
@@ -64,7 +64,7 @@ public class SettingsActivity extends AppCompatActivity {
         movingIntervalSpinner = findViewById(R.id.movingIntervalSpinner);
         stationaryIntervalSpinner = findViewById(R.id.stationaryIntervalSpinner);
         speedThresholdSpinner = findViewById(R.id.speedThresholdSpinner);
-        baseTopicInput = findViewById(R.id.baseTopicInput);
+        clientNameInput = findViewById(R.id.clientNameInput);
         settingsPreview = findViewById(R.id.settingsPreview);
         saveButton = findViewById(R.id.saveButton);
         resetButton = findViewById(R.id.resetButton);
@@ -92,8 +92,8 @@ public class SettingsActivity extends AppCompatActivity {
         stationaryIntervalSpinner.setOnItemSelectedListener(previewListener);
         speedThresholdSpinner.setOnItemSelectedListener(previewListener);
 
-        // Update preview when base topic changes
-        baseTopicInput.addTextChangedListener(new android.text.TextWatcher() {
+        // Update preview when client name changes
+        clientNameInput.addTextChangedListener(new android.text.TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
@@ -133,13 +133,13 @@ public class SettingsActivity extends AppCompatActivity {
         long movingInterval = prefs.getLong("moving_interval", Config.LOCATION_UPDATE_INTERVAL_MOVING);
         long stationaryInterval = prefs.getLong("stationary_interval", Config.LOCATION_UPDATE_INTERVAL_STATIONARY);
         float speedThreshold = prefs.getFloat("speed_threshold", Config.SPEED_THRESHOLD_MOVING);
-        String baseTopic = prefs.getString("mqtt_base_topic", Config.MQTT_TOPIC_BASE);
+        String clientName = prefs.getString("mqtt_client_name", Config.MQTT_CLIENT_NAME);
 
         // Set spinner positions
         movingIntervalSpinner.setSelection(findClosestIndex(movingInterval, movingIntervalValues));
         stationaryIntervalSpinner.setSelection(findClosestIndex(stationaryInterval, stationaryIntervalValues));
         speedThresholdSpinner.setSelection(findClosestIndex(speedThreshold, speedThresholdValues));
-        baseTopicInput.setText(baseTopic);
+        clientNameInput.setText(clientName);
 
         updatePreview();
     }
@@ -176,13 +176,13 @@ public class SettingsActivity extends AppCompatActivity {
         int movingPos = movingIntervalSpinner.getSelectedItemPosition();
         int stationaryPos = stationaryIntervalSpinner.getSelectedItemPosition();
         int speedPos = speedThresholdSpinner.getSelectedItemPosition();
-        String baseTopic = baseTopicInput.getText().toString().trim();
+        String clientName = clientNameInput.getText().toString().trim();
 
-        if (baseTopic.isEmpty()) {
-            baseTopic = Config.MQTT_TOPIC_BASE;
+        if (clientName.isEmpty()) {
+            clientName = Config.MQTT_CLIENT_NAME;
         }
 
-        String preview = "MQTT Topic: " + baseTopic + "{device_id}/gpsdata\n\n" +
+        String preview = "MQTT Topic: /iotds/" + clientName + "/{device_id}/gpsdata\n\n" +
                 "When moving faster than " + speedThresholds[speedPos] + ":\n" +
                 "  → Send GPS data every " + movingIntervals[movingPos] + "\n\n" +
                 "When stationary or moving slowly:\n" +
@@ -195,26 +195,21 @@ public class SettingsActivity extends AppCompatActivity {
         int movingPos = movingIntervalSpinner.getSelectedItemPosition();
         int stationaryPos = stationaryIntervalSpinner.getSelectedItemPosition();
         int speedPos = speedThresholdSpinner.getSelectedItemPosition();
-        String baseTopic = baseTopicInput.getText().toString().trim();
+        String clientName = clientNameInput.getText().toString().trim();
 
-        // Validate base topic
-        if (baseTopic.isEmpty()) {
-            baseTopic = Config.MQTT_TOPIC_BASE;
+        // Validate client name
+        if (clientName.isEmpty()) {
+            clientName = Config.MQTT_CLIENT_NAME;
         }
 
-        // Ensure topic starts and ends with /
-        if (!baseTopic.startsWith("/")) {
-            baseTopic = "/" + baseTopic;
-        }
-        if (!baseTopic.endsWith("/")) {
-            baseTopic = baseTopic + "/";
-        }
+        // Remove any forward slashes from client name
+        clientName = clientName.replace("/", "");
 
         SharedPreferences.Editor editor = prefs.edit();
         editor.putLong("moving_interval", movingIntervalValues[movingPos]);
         editor.putLong("stationary_interval", stationaryIntervalValues[stationaryPos]);
         editor.putFloat("speed_threshold", speedThresholdValues[speedPos]);
-        editor.putString("mqtt_base_topic", baseTopic);
+        editor.putString("mqtt_client_name", clientName);
         editor.apply();
 
         Toast.makeText(this, "Settings saved! Restart tracking service for changes to take effect.",
@@ -240,7 +235,7 @@ public class SettingsActivity extends AppCompatActivity {
         editor.putLong("moving_interval", Config.LOCATION_UPDATE_INTERVAL_MOVING);
         editor.putLong("stationary_interval", Config.LOCATION_UPDATE_INTERVAL_STATIONARY);
         editor.putFloat("speed_threshold", Config.SPEED_THRESHOLD_MOVING);
-        editor.putString("mqtt_base_topic", Config.MQTT_TOPIC_BASE);
+        editor.putString("mqtt_client_name", Config.MQTT_CLIENT_NAME);
         editor.apply();
 
         loadSettings();

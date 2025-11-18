@@ -219,12 +219,12 @@ public class LocationTrackingService extends Service {
                 json.put("timestamp", sdf.format(new Date()));
 
                 if (mqttClient != null && mqttClient.isConnected()) {
-                    // Get base topic from settings
+                    // Get client name from settings
                     SharedPreferences prefs = getSharedPreferences("tracking_settings", MODE_PRIVATE);
-                    String baseTopic = prefs.getString("mqtt_base_topic", Config.MQTT_TOPIC_BASE);
+                    String clientName = prefs.getString("mqtt_client_name", Config.MQTT_CLIENT_NAME);
 
-                    // Construct topic: {base_topic}{device_id}/gpsdata
-                    String topic = baseTopic + deviceId + "/gpsdata";
+                    // Construct topic: /iotds/{clientname}/{device_id}/gpsdata
+                    String topic = "/iotds/" + clientName + "/" + deviceId + "/gpsdata";
                     MqttMessage message = new MqttMessage(json.toString().getBytes());
                     message.setQos(1);
                     message.setRetained(false);

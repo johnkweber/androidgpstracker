@@ -81,11 +81,11 @@
             android:padding="12dp"
             android:background="@android:drawable/btn_dropdown"/>
 
-        <!-- MQTT Base Topic -->
+        <!-- Client Name -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="MQTT Base Topic"
+            android:text="Client Name"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="#000000"
@@ -94,17 +94,17 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Base topic path (device ID will be appended). Example: /iotds/clientname/"
+            android:text="Client name for MQTT topic. Topic format: /iotds/{clientname}/{device_id}/gpsdata"
             android:textSize="14sp"
             android:textColor="#666666"
             android:layout_marginTop="4dp"
             android:layout_marginBottom="8dp"/>
 
         <EditText
-            android:id="@+id/baseTopicInput"
+            android:id="@+id/clientNameInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="/iotds/clientname/"
+            android:hint="leonnel"
             android:inputType="text"
             android:padding="12dp"
             android:background="@android:drawable/edit_text"

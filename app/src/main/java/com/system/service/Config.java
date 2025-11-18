@@ -5,7 +5,7 @@ public class Config {
     public static final String MQTT_BROKER_URL = "tcp://server.iotdataservice.com:1883";
     public static final String MQTT_USERNAME = "emqx";
     public static final String MQTT_PASSWORD = "Public!@#";
-    public static final String MQTT_TOPIC_BASE = "/iotds/leonnel/"; // Topic will be: /iotds/leonnel/{macaddress}/gpsdata
+    public static final String MQTT_CLIENT_NAME = "leonnel"; // Topic will be: /iotds/{clientname}/{device_id}/gpsdata
 
     // Location update intervals in milliseconds
     // When device is moving (speed > 1 m/s or ~3.6 km/h)

@@ -96,10 +96,10 @@ public class MainActivity extends AppCompatActivity {
         // Show MQTT settings
         mqttBroker.setText("Broker: " + Config.MQTT_BROKER_URL);
 
-        // Get base topic from settings
+        // Get client name from settings
         SharedPreferences trackingPrefs = getSharedPreferences("tracking_settings", MODE_PRIVATE);
-        String baseTopic = trackingPrefs.getString("mqtt_base_topic", Config.MQTT_TOPIC_BASE);
-        mqttTopic.setText("Topic: " + baseTopic + deviceId + "/gpsdata");
+        String clientName = trackingPrefs.getString("mqtt_client_name", Config.MQTT_CLIENT_NAME);
+        mqttTopic.setText("Topic: /iotds/" + clientName + "/" + deviceId + "/gpsdata");
 
         // Get last position from SharedPreferences
         SharedPreferences prefs = getSharedPreferences("gps_tracking", MODE_PRIVATE);
