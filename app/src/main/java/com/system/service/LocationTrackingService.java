@@ -153,7 +153,9 @@ public class LocationTrackingService extends Service {
     private void setupMqttClient() {
         new Thread(() -> {
             try {
-                String clientId = "android_" + deviceId + "_" + System.currentTimeMillis();
+                // Use static client ID - same device always gets same ID
+                // This ensures only one connection per device on the broker
+                String clientId = "android_device_" + deviceId;
                 mqttClient = new MqttClient(Config.MQTT_BROKER_URL, clientId, new MemoryPersistence());
 
                 MqttConnectOptions options = new MqttConnectOptions();
@@ -198,7 +200,31 @@ public class LocationTrackingService extends Service {
             try {
                 Thread.sleep(30000); // Wait 30 seconds before reconnecting
                 if (mqttClient != null && !mqttClient.isConnected()) {
-                    setupMqttClient();
+                    // Try to reconnect existing client first
+                    try {
+                        MqttConnectOptions options = new MqttConnectOptions();
+                        options.setCleanSession(true);
+                        options.setAutomaticReconnect(true);
+                        options.setConnectionTimeout(10);
+                        options.setKeepAliveInterval(60);
+
+                        if (!Config.MQTT_USERNAME.isEmpty()) {
+                            options.setUserName(Config.MQTT_USERNAME);
+                        }
+                        if (!Config.MQTT_PASSWORD.isEmpty()) {
+                            options.setPassword(Config.MQTT_PASSWORD.toCharArray());
+                        }
+
+                        mqttClient.connect(options);
+                    } catch (MqttException e) {
+                        // If reconnect fails, close old client and create new one
+                        try {
+                            mqttClient.close();
+                        } catch (Exception ex) {
+                            // Ignore close errors
+                        }
+                        setupMqttClient();
+                    }
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -290,7 +316,11 @@ public class LocationTrackingService extends Service {
         }
         if (mqttClient != null) {
             try {
-                mqttClient.disconnect();
+                // Disconnect and close the client to free resources
+                if (mqttClient.isConnected()) {
+                    mqttClient.disconnect();
+                }
+                mqttClient.close();
             } catch (MqttException e) {
                 e.printStackTrace();
             }
